@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  frontend:
+    container_name: ukfp-allocation-frontend
+    image: ukfp-allocation-frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+
+  api:
+    container_name: ukfp-allocation-api
+    image: ukfp-allocation-api:latest
+    ports:
+      - "5000:5000"
