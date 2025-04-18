@@ -15,3 +15,37 @@ services:
     image: ukfp-allocation-api:latest
     ports:
       - "5000:5000"
+
+  worker-api:
+    container_name: ukfp-allocation-worker-api
+    image: ukfp-allocation-worker-api:latest
+    depends_on:
+      - rabbitmq
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+
+  worker-runner:
+    container_name: ukfp-allocation-worker-runner
+    image: ukfp-allocation-worker-runner:latest
+    command: celery -A celery_app worker --loglevel=info
+    ports:
+      - "5000:6000"
+    depends_on:
+      - rabbitmq
+      - redis
+
+  rabbitmq:
+    container_name: ukfp-allocation-rabbitmq
+    image: rabbitmq:latest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  # Redis (Optional - Backend/Progress Tracking)
+  redis:
+    container_name: ukfp-allocation-redis
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
