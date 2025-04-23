@@ -9,20 +9,29 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      - API_URL=http://ukfp-allocation-api:5000
 
   api:
     container_name: ukfp-allocation-api
     image: ukfp-allocation-api:latest
     ports:
       - "5000:5000"
+    environment:
+      - PORT=5000
+      - WORKER_API_URL=http://ukfp-allocation-worker-api:6000
+      - REDIS_URL=redis://ukfp-allocation-redis:6379
 
   worker-api:
     container_name: ukfp-allocation-worker-api
     image: ukfp-allocation-worker-api:latest
+    ports:
+      - "6000:5000"
     depends_on:
       - rabbitmq
       - redis
     environment:
+      - PORT=5000
       - REDIS_HOST=redis
       - RABBITMQ_HOST=rabbitmq
 
@@ -31,7 +40,7 @@ services:
     image: ukfp-allocation-worker-runner:latest
     command: celery -A celery_app worker --loglevel=info
     ports:
-      - "5000:6000"
+      - "5000:7000"
     depends_on:
       - rabbitmq
       - redis
@@ -43,7 +52,6 @@ services:
       - "5672:5672"
       - "15672:15672"
 
-  # Redis (Optional - Backend/Progress Tracking)
   redis:
     container_name: ukfp-allocation-redis
     image: "redis:alpine"
