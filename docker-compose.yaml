@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   frontend:
@@ -10,7 +10,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - API_URL=http://ukfp-allocation-api:5000
+      - VITE_API_HOST=ukfp-allocation-api
+      - VITE_API_PORT=5000
 
   api:
     container_name: ukfp-allocation-api
@@ -19,28 +20,23 @@ services:
       - "5000:5000"
     environment:
       - PORT=5000
-      - WORKER_API_URL=http://ukfp-allocation-worker-api:6000
-      - REDIS_URL=redis://ukfp-allocation-redis:6379
-
-  worker-api:
-    container_name: ukfp-allocation-worker-api
-    image: ukfp-allocation-worker-api:latest
-    ports:
-      - "6000:5000"
+      - REDIS_HOST=ukfp-allocation-redis
+      - RABBITMQ_URL=amqp://guest:guest@ukfp-allocation-rabbitmq:5672//
     depends_on:
       - rabbitmq
       - redis
-    environment:
-      - PORT=5000
-      - REDIS_HOST=redis
-      - RABBITMQ_HOST=rabbitmq
 
-  worker-runner:
-    container_name: ukfp-allocation-worker-runner
-    image: ukfp-allocation-worker-runner:latest
-    command: celery -A celery_app worker --loglevel=info
-    ports:
-      - "5000:7000"
+  worker:
+    container_name: ukfp-allocation-worker
+    image: ukfp-allocation-worker:latest
+    volumes:
+      - ../ukfp-allocation-worker:/app
+    working_dir: /app/src
+    command: celery -A celery_app worker --loglevel=info --pool=solo
+    environment:
+      - BROKER_URL=amqp://guest:guest@ukfp-allocation-rabbitmq:5672//
+      - REDIS_HOST=ukfp-allocation-redis
+      - REDIS_PORT=6379
     depends_on:
       - rabbitmq
       - redis
