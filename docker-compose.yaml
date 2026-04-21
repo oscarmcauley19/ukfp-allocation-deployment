@@ -3,21 +3,28 @@ version: "3.8"
 services:
   frontend:
     container_name: ukfp-allocation-frontend
-    image: ukfp-allocation-frontend:latest
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../ukfp-allocation-frontend
+      dockerfile: Dockerfile.local
     ports:
       - "3000:3000"
+    volumes:
+      - ../ukfp-allocation-frontend:/app
+      - /app/node_modules # Prevent overwriting node_modules
+    working_dir: /app
     environment:
       - VITE_API_HOST=ukfp-allocation-api
       - VITE_API_PORT=5000
 
   api:
     container_name: ukfp-allocation-api
-    image: ukfp-allocation-api:latest
+    build:
+      context: ../ukfp-allocation-api
+      dockerfile: Dockerfile.local
     ports:
       - "5000:5000"
+    volumes:
+      - ../ukfp-allocation-api:/app
     environment:
       - PORT=5000
       - REDIS_HOST=ukfp-allocation-redis
@@ -28,9 +35,12 @@ services:
 
   worker:
     container_name: ukfp-allocation-worker
-    image: ukfp-allocation-worker:latest
+    build:
+      context: ../ukfp-allocation-worker
+      dockerfile: Dockerfile
     volumes:
       - ../ukfp-allocation-worker:/app
+      - /app/node_modules # Prevent overwriting node_modules
     working_dir: /app/src
     command: celery -A celery_app worker --loglevel=info --pool=solo
     environment:
